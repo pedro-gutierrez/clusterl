@@ -9,6 +9,7 @@
          handle_info/2,
          terminate/2,
          code_change/3]).
+-export([attempt_leader/0]).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).

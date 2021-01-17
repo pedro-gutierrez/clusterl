@@ -4,7 +4,12 @@
   {registered, []},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cowboy,
+    prometheus,
+    jiffy,
+    lager,
+    mnesia
    ]},
   {env,[]},
   {modules, []},

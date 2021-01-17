@@ -15,7 +15,6 @@
          join/0,
          leave/1]).
 
-
 state() ->
     state(neighbours()).
 
@@ -40,16 +39,21 @@ neighbours() ->
     members() -- [node()].
 
 size() ->
-    {ok, Size} = application:get_env(cluster, size),
-    Size.
+    erlang:list_to_integer(env("CLUSTER_SIZE")).
 
 namespace() ->
-    {ok, Ns} = application:get_env(cluster, namespace),
-    Ns.
+    erlang:list_to_binary(env("CLUSTER_NAMESPACE")).
 
 service() ->
-    {ok, Service} = application:get_env(cluster, service),
-    Service.
+    erlang:list_to_binary(env("CLUSTER_SERVICE")).
+
+env(Name) ->
+    case os:getenv(Name) of
+      false ->
+          throw("missing env variable: " ++ Name);
+      Value ->
+          Value
+    end.
 
 members() ->
     Ns = namespace(),
@@ -74,7 +78,7 @@ node(Service, Ns, Id) ->
              ".",
              Ns/binary,
              ".svc.cluster.local">>,
-    list_to_atom(binary_to_list(<<"netcomp@", Host/binary>>)).
+    list_to_atom(binary_to_list(<<Service/binary, "@", Host/binary>>)).
 
 leader() ->
     case global:whereis_name(cluster_leader) of
@@ -102,6 +106,6 @@ leave(normal) ->
     leave(Neighbours);
 leave(halt) ->
     erlang:halt();
-
 leave(Nodes) ->
     [erlang:disconnect_node(N) || N <- Nodes].
+
