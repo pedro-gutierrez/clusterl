@@ -90,14 +90,20 @@ read(Key) ->
                     end).
 
 info() ->
-    Size = mnesia:table_info(cluster_items, size),
-    ActiveReplicas = mnesia:table_info(cluster_items, active_replicas),
-    AllReplicas = mnesia:table_info(cluster_items, all_nodes),
-    RamCopies = mnesia:table_info(cluster_items, ram_copies),
+    Size = table_info(cluster_items, size),
+    ActiveReplicas = table_info(cluster_items, active_replicas),
+    AllReplicas = table_info(cluster_items, all_nodes),
+    RamCopies = table_info(cluster_items, ram_copies),
 
     #{size => Size,
       ram_copies => cluster_http:hosts(RamCopies),
       replicas =>
           #{all => cluster_http:hosts(AllReplicas), active => cluster_http:hosts(ActiveReplicas)}}.
 
-
+table_info(Tab, Kind) ->
+    try 
+        mnesia:table_info(Tab, Kind)
+    catch
+        _:_ ->
+           [] 
+    end.
