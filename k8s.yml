@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: clusterl
+  name: front
   annotations:
     dev.okteto.com/auto-ingress: "true"
 spec:
@@ -10,6 +10,18 @@ spec:
   ports:
     - name: clusterl
       port: 8080
+  selector:
+    app: clusterl
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clusterl
+spec:
+  clusterIP: None
+  ports:
+    - name: epmd
+      port: 4369
   selector:
     app: clusterl
 ---
@@ -49,6 +61,9 @@ spec:
           ports:
             - name: clusterl
               containerPort: 8080
+              protocol: TCP
+            - name: epmd
+              containerPort: 4369
               protocol: TCP
           envFrom:
             - secretRef:
