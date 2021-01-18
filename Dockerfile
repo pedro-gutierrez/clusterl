@@ -11,4 +11,4 @@ ADD entrypoint.sh .
 ADD config config
 ADD apps apps
 RUN ./rebar3 release
-CMD ["./entrypoint.sh"]
+CMD ["/opt/cluster/entrypoint.sh"]

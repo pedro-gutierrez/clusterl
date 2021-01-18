@@ -1,7 +1,7 @@
 shell:
 	@CLUSTER_SERVICE=netcomp \
 		CLUSTER_NAMESPACE=nc \
-		CLUSTER_SIZE=1 \
+		CLUSTER_SIZE=2 \
 		ERLANG_COOKIE=netcomp \
 		rebar3 shell \
 		--config config/sys.config \
