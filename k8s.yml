@@ -43,6 +43,8 @@ spec:
       containers:
         - name: clusterl
           imagePullPolicy: Always
+          tty: true
+          stdin: true
           image: docker.pkg.github.com/pedro-gutierrez/clusterl/clusterl:latest
           ports:
             - name: clusterl
@@ -54,3 +56,9 @@ spec:
           env:
             - name: DEPLOYMENT_VERSION
               value: "{{VERSION}}"
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 3
