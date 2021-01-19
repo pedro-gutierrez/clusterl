@@ -21,17 +21,17 @@ init(_) ->
 
 handle_info({cluster, _}, State) ->
     case cluster:state() of
-      red ->
-          attempt_leader();
-      _ ->
-          ok
+        red ->
+            attempt_leader();
+        _ ->
+            ok
     end,
     {noreply, State}.
 
-% handle_info({'DOWN', Ref, process, Pid, Reason}, #{ref := Ref}) ->
-%     lager:notice("CLUSTER leader in ~p failed with reason ~p~n", [node(Pid), Reason]),
-%     State = attempt_leader(),
-%     {noreply, State}.
+                                                % handle_info({'DOWN', Ref, process, Pid, Reason}, #{ref := Ref}) ->
+                                                %     lager:notice("CLUSTER leader in ~p failed with reason ~p~n", [node(Pid), Reason]),
+                                                %     State = attempt_leader(),
+                                                %     {noreply, State}.
 
 handle_cast(_, State) ->
     {noreply, State}.
@@ -48,12 +48,12 @@ terminate(Reason, _State) ->
 
 attempt_leader() ->
     case global:register_name(cluster_leader, self(), conflict_resolution_fun()) of
-      yes ->
-          lager:notice("CLUSTER has new leader ~p~n", [node()]),
-          notify_cluster_leader();
-      no ->
-          Pid = global:whereis_name(cluster_leader),
-          lager:notice("CLUSTER already has leader ~p~n", [node(Pid)])
+        yes ->
+            lager:notice("CLUSTER has new leader ~p~n", [node()]),
+            notify_cluster_leader();
+        no ->
+            Pid = global:whereis_name(cluster_leader),
+            lager:notice("CLUSTER already has leader ~p~n", [node(Pid)])
     end.
 
 notify_cluster_leader() ->
@@ -66,12 +66,12 @@ conflict_resolution_fun() ->
             #{size := Size1} = rpc:call(Node1, cluster_store, info, []),
             #{size := Size2} = rpc:call(Node2, cluster_store, info, []),
             {{WinnerPid, WinnerSize}, {LooserPid, LooserSize}} = case Size1 > Size2 of
-                                                                   true ->
-                                                                       {{Pid1, Size1},
-                                                                        {Pid2, Size2}};
-                                                                   false ->
-                                                                       {{Pid2, Size2},
-                                                                        {Pid1, Size1}}
+                                                                     true ->
+                                                                         {{Pid1, Size1},
+                                                                          {Pid2, Size2}};
+                                                                     false ->
+                                                                         {{Pid2, Size2},
+                                                                          {Pid1, Size1}}
                                                                  end,
             lager:notice("CLUSTER netsplit winner: ~p (~p keys), looser ~p (~p keys)",
                          [node(WinnerPid), WinnerSize, node(LooserPid), LooserSize]),

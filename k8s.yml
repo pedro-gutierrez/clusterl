@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: front
+  name: cluster
   annotations:
     dev.okteto.com/auto-ingress: "true"
 spec:
@@ -17,6 +17,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: clusterl
+  labels:
+    app: clusterl
 spec:
   clusterIP: None
   ports:
@@ -29,6 +31,8 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: clusterl
+  labels:
+    app: clusterl
 spec:
   replicas: 2
   serviceName: clusterl

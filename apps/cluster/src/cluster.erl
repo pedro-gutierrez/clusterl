@@ -13,7 +13,8 @@
          service/0,
          namespace/0,
          join/0,
-         leave/1]).
+         leave/1,
+         env/1]).
 
 state() ->
     state(neighbours()).
@@ -49,10 +50,10 @@ service() ->
 
 env(Name) ->
     case os:getenv(Name) of
-      false ->
-          throw("missing env variable: " ++ Name);
-      Value ->
-          Value
+        false ->
+            throw("missing env variable: " ++ Name);
+        Value ->
+            Value
     end.
 
 members() ->
@@ -82,10 +83,10 @@ node(Service, Ns, Id) ->
 
 leader() ->
     case global:whereis_name(cluster_leader) of
-      undefined ->
-          none;
-      Pid ->
-          node(Pid)
+        undefined ->
+            none;
+        Pid ->
+            node(Pid)
     end.
 
 i_am_leader() ->

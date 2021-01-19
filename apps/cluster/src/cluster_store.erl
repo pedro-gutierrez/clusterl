@@ -27,7 +27,7 @@ handle_info({cluster, _}, State) ->
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
     lager:notice("CLUSTER store netsplit detected by Mnesia: ~p, ~p", [Context, Node]),
-    % TODO: increment a counter in prometheus metrics
+                                                % TODO: increment a counter in prometheus metrics
     {noreply, State};
 handle_info(Other, State) ->
     lager:notice("CLUSTER store ignoring ~p", [Other]),
@@ -82,10 +82,10 @@ read(Key) ->
     mnesia:activity(transaction,
                     fun () ->
                             case mnesia:read({cluster_items, Key}) of
-                              [] ->
-                                  {error, not_found};
-                              [{_, _, Value}] ->
-                                  {ok, Value}
+                                [] ->
+                                    {error, not_found};
+                                [{_, _, Value}] ->
+                                    {ok, Value}
                             end
                     end).
 
@@ -105,5 +105,5 @@ table_info(Tab, Kind) ->
         mnesia:table_info(Tab, Kind)
     catch
         _:_ ->
-           [] 
+            [] 
     end.

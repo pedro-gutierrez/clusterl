@@ -76,10 +76,10 @@ node(Host) ->
              Ns/binary,
              ".svc.cluster.local">>,
     try
-      erlang:list_to_existing_atom(erlang:binary_to_list(Node))
+        erlang:list_to_existing_atom(erlang:binary_to_list(Node))
     catch
-      _:_ ->
-          unknown
+        _:_ ->
+            unknown
     end.
 
 created(Req) ->

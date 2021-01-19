@@ -3,10 +3,10 @@
 -export([init/2]).
 
 init(Req, _) ->
-  case cluster:i_am_leader() of
-    true ->
-      cluster_http:ok(Req);
-    _ ->
-      cluster_http:unavailable(Req)
-  end.
+    case cluster:i_am_leader() of
+        true ->
+            cluster_http:ok(Req);
+        _ ->
+            cluster_http:unavailable(Req)
+    end.
 
