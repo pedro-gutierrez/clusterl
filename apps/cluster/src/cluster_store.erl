@@ -99,4 +99,5 @@ table_info(Tab, Kind) ->
     end.
 
 purge() ->
-    mnesia:clear_table(cluster_items).
+    {atomic, ok} = mnesia:clear_table(cluster_items),
+    ok.

@@ -55,8 +55,8 @@ do_assert_cluster_state(State) ->
     {ok, #{status := 200, body := #{<<"state">> := State}}} = http(Url).
 
 refute_cluster_leader(Host) ->
-    print("refuting cluster leader ~p", [Host]),
     retry(fun() ->
+             print("refuting cluster leader ~p", [Host]),
              Url = endpoint(),
              {ok, #{status := 200, body := #{<<"leader">> := Leader}}} = http(Url),
              ?assert(Host =/= Leader)
@@ -64,9 +64,9 @@ refute_cluster_leader(Host) ->
           <<"expected cluster leader to be ", Host/binary>>).
 
 cluster_leader() ->
-    print("retrieving cluster leader"),
     {ok, Leader} =
         retry(fun() ->
+                 print("retrieving cluster leader"),
                  Url = endpoint(),
                  {ok, #{status := 200, body := #{<<"leader">> := Leader}}} = http(Url),
                  {ok, Leader}
@@ -75,8 +75,8 @@ cluster_leader() ->
     Leader.
 
 halt_host(Host) ->
-    print("halting host ~p", [Host]),
     retry(fun() ->
+             print("halting host ~p", [Host]),
              Path = erlang:binary_to_list(<<"/hosts/", Host/binary, "?mode=halt">>),
              Url = url(Path),
              {ok, #{status := 200}} = http(delete, Url)
@@ -113,8 +113,8 @@ do_join_hosts(Hosts) ->
                   Hosts).
 
 do_join_host(Host) ->
-    print("joining host ~p", [Host]),
     retry(fun() ->
+             print("joining host ~p", [Host]),
              Path = erlang:binary_to_list(<<"/hosts/", Host/binary>>),
              Url = url(Path),
              Res = http(post, Url),
@@ -130,9 +130,9 @@ join_hosts_and_wait_for_cluster_state(Hosts, State) ->
           <<"joining hosts did not result in a ", State/binary, " cluster state">>).
 
 cluster_hosts() ->
-    print("getting cluster hosts"),
     {ok, Hosts} =
         retry(fun() ->
+                 print("getting cluster hosts"),
                  Url = endpoint(),
                  {ok, #{status := 200, body := #{<<"nodes">> := Hosts}}} = http(Url),
                  {ok, Hosts}
@@ -141,16 +141,16 @@ cluster_hosts() ->
     Hosts.
 
 delete_all_keys() ->
-    print("deleting all keys"),
     retry(fun() ->
+             print("deleting all keys"),
              Url = url("/keys"),
              {ok, #{status := 200}} = http(delete, Url)
           end,
           <<"could not delete keys">>).
 
 write_keys(N) ->
-    print("writing ~p keys", [N]),
     retry(fun() ->
+             print("writing ~p keys", [N]),
              lists:foreach(fun(K) ->
                               Url = url("/keys/key" ++ K),
                               {ok, #{status := 200}} = http(put, Url, <<"value">>)
@@ -175,7 +175,7 @@ url(Base, Path) ->
                                                 %     <<Service/binary, "-", Id>>.
 
 endpoint() ->
-    cluster:env("CLUSTER_ENDPOINT").
+    "https://front-pedro-gutierrez.cloud.okteto.net".
 
 retry(Fun, Msg) ->
     retry(?RETRY_ATTEMPTS, ?RETRY_SLEEP, Fun, Msg).
