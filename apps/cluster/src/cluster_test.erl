@@ -29,6 +29,7 @@ test_halt_host() ->
     print("~n== TEST test_halt_host()"),
     setup(),
     assert_cluster_state(<<"green">>),
+    set_cluster_recovery("manual"),
     Leader = cluster_leader(),
     halt_host(Leader),
     assert_cluster_state(<<"red">>),
@@ -40,6 +41,7 @@ test_disconnect_host() ->
     print("~n== TEST test_disconnect_host()"),
     setup(),
     assert_cluster_state(<<"green">>),
+    set_cluster_recovery("manual"),
     Hosts = cluster_hosts(),
     disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
     join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>).
@@ -269,7 +271,8 @@ set_cluster_recovery(Recovery) ->
     print("setting cluster recovery to ~p", [Recovery]),
     retry(fun() ->
              Url = url("/?recovery=" ++ Recovery),
-             {ok, #{status := 200, body := #{<<"recovery">> := Recovery}}} = http(put, Url)
+             ExpectedRecovery = erlang:list_to_binary(Recovery),
+             {ok, #{status := 200, body := #{<<"recovery">> := ExpectedRecovery}}} = http(put, Url)
           end,
           <<"could not set cluster recovery">>).
 
