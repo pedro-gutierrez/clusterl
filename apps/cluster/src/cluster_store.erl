@@ -2,14 +2,9 @@
 
 -behaviour(gen_server).
 
--export([start_link/0,
-         init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
+-export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
--export([write/2, read/1, info/0]).
+-export([write/2, read/1, info/0, purge/0]).
 
 -record(cluster_items, {key, data}).
 
@@ -27,7 +22,7 @@ handle_info({cluster, _}, State) ->
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
     lager:notice("CLUSTER store netsplit detected by Mnesia: ~p, ~p", [Context, Node]),
-                                                % TODO: increment a counter in prometheus metrics
+    % TODO: increment a counter in prometheus metrics
     {noreply, State};
 handle_info(Other, State) ->
     lager:notice("CLUSTER store ignoring ~p", [Other]),
@@ -73,20 +68,15 @@ write(Key, Value) ->
     write(#cluster_items{key = Key, data = Value}).
 
 write(#cluster_items{} = Item) ->
-    mnesia:activity(transaction,
-                    fun () ->
-                            mnesia:write(Item)
-                    end).
+    mnesia:activity(transaction, fun() -> mnesia:write(Item) end).
 
 read(Key) ->
     mnesia:activity(transaction,
-                    fun () ->
-                            case mnesia:read({cluster_items, Key}) of
-                                [] ->
-                                    {error, not_found};
-                                [{_, _, Value}] ->
-                                    {ok, Value}
-                            end
+                    fun() ->
+                       case mnesia:read({cluster_items, Key}) of
+                           [] -> {error, not_found};
+                           [{_, _, Value}] -> {ok, Value}
+                       end
                     end).
 
 info() ->
@@ -101,9 +91,12 @@ info() ->
           #{all => cluster_http:hosts(AllReplicas), active => cluster_http:hosts(ActiveReplicas)}}.
 
 table_info(Tab, Kind) ->
-    try 
+    try
         mnesia:table_info(Tab, Kind)
     catch
         _:_ ->
-            [] 
+            []
     end.
+
+purge() ->
+    mnesia:clear_table(cluster_items).

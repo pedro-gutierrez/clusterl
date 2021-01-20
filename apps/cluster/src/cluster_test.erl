@@ -1,7 +1,5 @@
 -module(cluster_test).
 
-%-export([test_halt_host/0, test_disconnect_host/0]).
-
 -include_lib("eunit/include/eunit.hrl").
 
 -define(RETRY_ATTEMPTS, 120).
@@ -13,7 +11,8 @@ cluster_test_() ->
      ?TEST_TIMEOUT,
      fun() ->
         test_halt_host(),
-        test_disconnect_host()
+        test_disconnect_host(),
+        test_netsplit()
      end}.
 
 test_halt_host() ->
@@ -25,8 +24,7 @@ test_halt_host() ->
     assert_cluster_state(<<"red">>),
     refute_cluster_leader(Leader),
     join_host(Leader),
-    assert_cluster_state(<<"green">>),
-    ok.
+    assert_cluster_state(<<"green">>).
 
 test_disconnect_host() ->
     print("== TEST test_disconnect_host()"),
@@ -34,8 +32,17 @@ test_disconnect_host() ->
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
-    join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>),
-    ok.
+    join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>).
+
+test_netsplit() ->
+    print("== TEST test_netsplit()"),
+    setup(),
+    assert_cluster_state(<<"green">>),
+    Hosts = cluster_hosts(),
+    delete_all_keys(),
+    write_keys(100),
+    disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
+    write_keys(100).
 
 assert_cluster_state(State) ->
     retry(fun() -> do_assert_cluster_state(State) end,
@@ -132,6 +139,25 @@ cluster_hosts() ->
               end,
               <<"could not get cluster hosts">>),
     Hosts.
+
+delete_all_keys() ->
+    print("deleting all keys"),
+    retry(fun() ->
+             Url = url("/keys"),
+             {ok, #{status := 200}} = http(delete, Url)
+          end,
+          <<"could not delete keys">>).
+
+write_keys(N) ->
+    print("writing ~p keys", [N]),
+    retry(fun() ->
+             lists:foreach(fun(K) ->
+                              Url = url("/keys/key" ++ K),
+                              {ok, #{status := 200}} = http(put, Url, <<"value">>)
+                           end,
+                           lists:seq(1, N))
+          end,
+          <<"could not write keys">>).
 
 setup() ->
     inets:start(),
@@ -232,5 +258,5 @@ print(Msg) ->
 print(Msg, Args) ->
     io:format(user, Msg ++ "~n", Args).
 
-join_binaries([A, B]) ->
-    <<A/binary, ",", B/binary>>.
+% join_binaries([A, B]) ->
+%     <<A/binary, ",", B/binary>>.
