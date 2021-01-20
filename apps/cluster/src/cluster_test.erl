@@ -10,13 +10,13 @@ cluster_test_() ->
     {timeout,
      ?TEST_TIMEOUT,
      fun() ->
-        test_halt_host(),
-        test_disconnect_host(),
+        % test_halt_host(),
+        % test_disconnect_host(),
         test_netsplit()
      end}.
 
 test_halt_host() ->
-    print("== TEST test_halt_host()"),
+    print("~n== TEST test_halt_host()"),
     setup(),
     assert_cluster_state(<<"green">>),
     Leader = cluster_leader(),
@@ -27,7 +27,7 @@ test_halt_host() ->
     assert_cluster_state(<<"green">>).
 
 test_disconnect_host() ->
-    print("== TEST test_disconnect_host()"),
+    print("~n== TEST test_disconnect_host()"),
     setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
@@ -35,38 +35,50 @@ test_disconnect_host() ->
     join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>).
 
 test_netsplit() ->
-    print("== TEST test_netsplit()"),
+    print("~n== TEST test_netsplit()"),
     setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     delete_all_keys(),
-    write_keys(100),
+    write_keys("a", 100),
     disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
-    write_keys(100).
+    write_keys("b", 100),
+    {Host, Size} = busiest_host(),
+    join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>),
+    assert_cluster_leader(Host),
+    assert_store_size(Size).
 
 assert_cluster_state(State) ->
+    print("asserting cluster state ~p", [State]),
     retry(fun() -> do_assert_cluster_state(State) end,
           <<"cluster not in state: ", State/binary>>),
     ok.
 
 do_assert_cluster_state(State) ->
-    print("asserting cluster state ~p", [State]),
     Url = endpoint(),
     {ok, #{status := 200, body := #{<<"state">> := State}}} = http(Url).
 
-refute_cluster_leader(Host) ->
+assert_cluster_leader(Host) ->
+    print("asserting cluster leader ~p", [Host]),
     retry(fun() ->
-             print("refuting cluster leader ~p", [Host]),
+             Url = endpoint(),
+             {ok, #{status := 200, body := #{<<"leader">> := Host}}} = http(Url)
+          end,
+          <<"expected cluster to be", Host/binary>>).
+
+refute_cluster_leader(Host) ->
+    print("refuting cluster leader ~p", [Host]),
+    retry(fun() ->
              Url = endpoint(),
              {ok, #{status := 200, body := #{<<"leader">> := Leader}}} = http(Url),
              ?assert(Host =/= Leader)
           end,
-          <<"expected cluster leader to be ", Host/binary>>).
+          <<"expected cluster leader not to be ", Host/binary>>).
 
 cluster_leader() ->
+    print("retrieving cluster leader"),
     {ok, Leader} =
         retry(fun() ->
-                 print("retrieving cluster leader"),
                  Url = endpoint(),
                  {ok, #{status := 200, body := #{<<"leader">> := Leader}}} = http(Url),
                  {ok, Leader}
@@ -74,9 +86,22 @@ cluster_leader() ->
               <<"cluster does not have a leader">>),
     Leader.
 
-halt_host(Host) ->
+assert_store_size(Size) ->
+    print("asserting store size ~p", [Size]),
     retry(fun() ->
-             print("halting host ~p", [Host]),
+             Size = store_size(),
+             ok
+          end,
+          <<"Expected store size should be ", (erlang:integer_to_binary(Size))/binary>>).
+
+store_size() ->
+    Url = endpoint(),
+    {ok, #{status := 200, body := #{<<"store">> := #{<<"size">> := Size}}}} = http(Url),
+    Size.
+
+halt_host(Host) ->
+    print("halting host ~p", [Host]),
+    retry(fun() ->
              Path = erlang:binary_to_list(<<"/hosts/", Host/binary, "?mode=halt">>),
              Url = url(Path),
              {ok, #{status := 200}} = http(delete, Url)
@@ -84,6 +109,7 @@ halt_host(Host) ->
           <<"could not halt host ", Host/binary>>).
 
 disconnect_hosts_and_wait_for_cluster_state(Hosts, State) ->
+    print("disconnecting hosts ~p and waiting for cluster state ~p", [Hosts, State]),
     retry(fun() ->
              disconnect_hosts(Hosts),
              do_assert_cluster_state(State)
@@ -91,7 +117,6 @@ disconnect_hosts_and_wait_for_cluster_state(Hosts, State) ->
           <<"disconnecting hosts did not result in a ", State/binary, " cluster state">>).
 
 disconnect_hosts(Hosts) ->
-    print("disconnect hosts ~p", [Hosts]),
     lists:foreach(fun(Host) ->
                      Path = erlang:binary_to_list(<<"/hosts/", Host/binary, "?mode=disconnect">>),
                      Url = url(Path),
@@ -103,7 +128,6 @@ join_host(Host) ->
     retry(fun() -> do_join_host(Host) end, <<"could not join host ", Host/binary>>).
 
 do_join_hosts(Hosts) ->
-    print("joining hosts ~p", [Hosts]),
     lists:foreach(fun(Host) ->
                      Path = erlang:binary_to_list(<<"/hosts/", Host/binary>>),
                      Url = url(Path),
@@ -113,8 +137,8 @@ do_join_hosts(Hosts) ->
                   Hosts).
 
 do_join_host(Host) ->
+    print("joining host ~p", [Host]),
     retry(fun() ->
-             print("joining host ~p", [Host]),
              Path = erlang:binary_to_list(<<"/hosts/", Host/binary>>),
              Url = url(Path),
              Res = http(post, Url),
@@ -123,6 +147,7 @@ do_join_host(Host) ->
           <<"could not join host ", Host/binary>>).
 
 join_hosts_and_wait_for_cluster_state(Hosts, State) ->
+    print("joining hosts ~p and waiting for cluster state ~p", [Hosts, State]),
     retry(fun() ->
              do_join_hosts(Hosts),
              do_assert_cluster_state(State)
@@ -130,9 +155,9 @@ join_hosts_and_wait_for_cluster_state(Hosts, State) ->
           <<"joining hosts did not result in a ", State/binary, " cluster state">>).
 
 cluster_hosts() ->
+    print("getting cluster hosts"),
     {ok, Hosts} =
         retry(fun() ->
-                 print("getting cluster hosts"),
                  Url = endpoint(),
                  {ok, #{status := 200, body := #{<<"nodes">> := Hosts}}} = http(Url),
                  {ok, Hosts}
@@ -141,23 +166,79 @@ cluster_hosts() ->
     Hosts.
 
 delete_all_keys() ->
+    print("deleting all keys"),
     retry(fun() ->
-             print("deleting all keys"),
              Url = url("/keys"),
              {ok, #{status := 200}} = http(delete, Url)
           end,
           <<"could not delete keys">>).
 
-write_keys(N) ->
-    retry(fun() ->
-             print("writing ~p keys", [N]),
-             lists:foreach(fun(K) ->
-                              Url = url("/keys/key" ++ K),
-                              {ok, #{status := 200}} = http(put, Url, <<"value">>)
-                           end,
-                           lists:seq(1, N))
-          end,
+write_keys(Prefix, N) ->
+    BatchSize = 10,
+    NumberOfBatches = floor(N / BatchSize),
+    print("writing ~p keys with prefix ~p in ~p batches of ~p",
+          [N, Prefix, NumberOfBatches, BatchSize]),
+    retry(fun() -> write_key_batches(Prefix, BatchSize, NumberOfBatches) end,
           <<"could not write keys">>).
+
+write_key_batches(_, _, 0) ->
+    ok;
+write_key_batches(Prefix, BatchSize, BatchNumber) ->
+    progress(),
+    write_key_batch(Prefix, BatchSize, BatchNumber),
+    write_key_batches(Prefix, BatchSize, BatchNumber - 1).
+
+write_key_batch(Prefix, BatchSize, BatchNumber) ->
+    To = BatchNumber * BatchSize,
+    From = (BatchNumber - 1) * BatchSize + 1,
+    write_keys(Prefix, From, To).
+
+write_keys(Prefix, From, To) ->
+    Keys = lists:seq(From, To),
+    lists:foreach(fun(I) ->
+                     K = Prefix ++ erlang:integer_to_list(I),
+                     {ok, #{status := 200}} = do_write_key(K, "value")
+                  end,
+                  Keys).
+
+do_write_key(K, V) ->
+    Url = url("/keys/key" ++ K),
+    Resp = http(put, Url, [], V),
+    Resp.
+
+busiest_host() ->
+    Hosts = cluster_hosts(),
+    Score = lists:foldl(fun(H, Map) -> maps:put(H, 0, Map) end, #{}, Hosts),
+    print("initial score: ~p", [Score]),
+    busiest_host(Score, 10).
+
+busiest_host(Score) ->
+    [Default | _] = cluster_hosts(),
+    maps:fold(fun(Host, Size, {_, Size0} = Current) ->
+                 case Size > Size0 of
+                     true -> {Host, Size};
+                     _ -> Current
+                 end
+              end,
+              {Default, 0},
+              Score).
+
+busiest_host(Score, 0) ->
+    busiest_host(Score);
+busiest_host(Score, IterationsLeft) ->
+    {Host, Size} = cluster_store_size(),
+    Score2 = maps:put(Host, Size, Score),
+
+    busiest_host(Score2, IterationsLeft - 1).
+
+cluster_store_size() ->
+    Url = endpoint(),
+    {ok,
+     #{status := 200,
+       headers := #{<<"host">> := Host},
+       body := #{<<"store">> := #{<<"size">> := Size}}}} =
+        http(Url),
+    {Host, Size}.
 
 setup() ->
     inets:start(),
@@ -183,6 +264,7 @@ retry(Fun, Msg) ->
 retry(0, _, _, Msg) ->
     throw(Msg);
 retry(Attempts, Sleep, Fun, Msg) ->
+    progress(),
     case safe(Fun) of
         ok ->
             ok;
@@ -214,8 +296,10 @@ http(Method, Url, Headers) ->
     request(Method, Request).
 
 http(Method, Url, Headers, Body) ->
-    Request = {Url, Headers, "", Body},
-    request(Method, Request).
+    Req = {Url, Headers, "", Body},
+    Resp = request(Method, Req),
+    maybe_print(#{request => Req, response => Resp}),
+    Resp.
 
 request(Method, Request) ->
     case httpc:request(Method, Request, [], []) of
@@ -256,7 +340,15 @@ print(Msg) ->
     print(Msg, []).
 
 print(Msg, Args) ->
-    io:format(user, Msg ++ "~n", Args).
+    io:format(user, "~n" ++ Msg ++ " ", Args).
 
-% join_binaries([A, B]) ->
-%     <<A/binary, ",", B/binary>>.
+maybe_print(Term) ->
+    case os:getenv("TEST_DEBUG") of
+        "true" ->
+            print("~p", [Term]);
+        _ ->
+            ok
+    end.
+
+progress() ->
+    io:format(user, ".", []).
