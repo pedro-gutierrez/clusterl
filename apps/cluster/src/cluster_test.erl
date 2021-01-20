@@ -19,9 +19,10 @@ cluster_test_() ->
     {timeout,
      ?TEST_TIMEOUT,
      fun() ->
-        test_halt_host(),
-        test_disconnect_host(),
-        test_netsplit()
+        %test_halt_host(),
+        %test_disconnect_host(),
+        %test_netsplit_recovery_after_joining_hosts(),
+        test_netsplit_automatic_recovery()
      end}.
 
 test_halt_host() ->
@@ -43,10 +44,26 @@ test_disconnect_host() ->
     disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
     join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>).
 
-test_netsplit() ->
-    print("~n== TEST test_netsplit()"),
+test_netsplit_manual_recovery() ->
+    print("~n== TEST test_netsplit_manual_recovery()"),
     setup(),
     assert_cluster_state(<<"green">>),
+    set_cluster_recovery("manual"),
+    Hosts = cluster_hosts(),
+    delete_all_keys(),
+    write_keys("a", 100),
+    disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
+    write_keys("b", 100),
+    {Host, Size} = busiest_host(),
+    join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>),
+    assert_cluster_leader(Host),
+    assert_store_size(Size).
+
+test_netsplit_automatic_recovery() ->
+    print("~n== TEST test_netsplit_automatic_recovery()"),
+    setup(),
+    assert_cluster_state(<<"green">>),
+    set_cluster_recovery("auto"),
     Hosts = cluster_hosts(),
     delete_all_keys(),
     write_keys("a", 100),
@@ -218,7 +235,6 @@ do_write_key(K, V) ->
 busiest_host() ->
     Hosts = cluster_hosts(),
     Score = lists:foldl(fun(H, Map) -> maps:put(H, 0, Map) end, #{}, Hosts),
-    print("initial score: ~p", [Score]),
     busiest_host(Score, 10).
 
 busiest_host(Score) ->
@@ -248,6 +264,14 @@ cluster_store_size() ->
        body := #{<<"store">> := #{<<"size">> := Size}}}} =
         http(Url),
     {Host, Size}.
+
+set_cluster_recovery(Recovery) ->
+    print("setting cluster recovery to ~p", [Recovery]),
+    retry(fun() ->
+             Url = url("/?recovery=" ++ Recovery),
+             {ok, #{status := 200, body := #{<<"recovery">> := Recovery}}} = http(put, Url)
+          end,
+          <<"could not set cluster recovery">>).
 
 setup() ->
     inets:start(),

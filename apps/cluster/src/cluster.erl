@@ -1,20 +1,8 @@
 -module(cluster).
 
--export([members/0,
-         start/0,
-         join/1,
-         state/0,
-         state/1,
-         neighbours/0,
-         leader/0,
-         i_am_leader/0,
-         http_port/0,
-         size/0,
-         service/0,
-         namespace/0,
-         join/0,
-         leave/1,
-         env/1]).
+-export([members/0, start/0, join/1, state/0, state/1, neighbours/0, leader/0,
+         i_am_leader/0, http_port/0, size/0, service/0, namespace/0, join/0, leave/1, env/1,
+         set_recovery/1, recovery/0]).
 
 state() ->
     state(neighbours()).
@@ -65,20 +53,19 @@ members() ->
 nodes(_, _, 0) ->
     [];
 nodes(Service, Ns, Size) ->
-    lists:map(fun (Id) ->
-                      node(Service, Ns, erlang:integer_to_binary(Id - 1))
-              end,
+    lists:map(fun(Id) -> node(Service, Ns, erlang:integer_to_binary(Id - 1)) end,
               lists:seq(1, Size)).
 
 node(Service, Ns, Id) ->
-    Host = <<Service/binary,
-             "-",
-             Id/binary,
-             ".",
-             Service/binary,
-             ".",
-             Ns/binary,
-             ".svc.cluster.local">>,
+    Host =
+        <<Service/binary,
+          "-",
+          Id/binary,
+          ".",
+          Service/binary,
+          ".",
+          Ns/binary,
+          ".svc.cluster.local">>,
     list_to_atom(binary_to_list(<<Service/binary, "@", Host/binary>>)).
 
 leader() ->
@@ -110,3 +97,8 @@ leave(halt) ->
 leave(Nodes) ->
     [erlang:disconnect_node(N) || N <- Nodes].
 
+set_recovery(Recovery) ->
+    cluster_monitor:set_recovery(Recovery).
+
+recovery() ->
+    cluster_monitor:recovery().

@@ -20,3 +20,4 @@ _checkouts/
 .DS_Store
 
 log
+.vscode

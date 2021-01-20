@@ -33,7 +33,7 @@ terminate(Reason, _State) ->
 start_server(Port) ->
     Dispatch =
         cowboy_router:compile([{'_',
-                                [{"/", cluster_http_health, []},
+                                [{"/", cluster_http_info, []},
                                  {"/hosts/:host", cluster_http_host, []},
                                  {"/keys", cluster_http_store, []},
                                  {"/keys/:key", cluster_http_store_key, []},
