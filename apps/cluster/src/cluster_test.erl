@@ -5,13 +5,22 @@
 -define(RETRY_ATTEMPTS, 120).
 -define(RETRY_SLEEP, 1000).
 -define(TEST_TIMEOUT, 300).
+-define(DEFAULT_ENDPOINT, "https://front-pedro-gutierrez.cloud.okteto.net").
+
+endpoint() ->
+    case os:getenv("TEST_ENDPOINT") of
+        false ->
+            ?DEFAULT_ENDPOINT;
+        Endpoint ->
+            Endpoint
+    end.
 
 cluster_test_() ->
     {timeout,
      ?TEST_TIMEOUT,
      fun() ->
-        % test_halt_host(),
-        % test_disconnect_host(),
+        test_halt_host(),
+        test_disconnect_host(),
         test_netsplit()
      end}.
 
@@ -249,14 +258,6 @@ url(Path) ->
 
 url(Base, Path) ->
     Base ++ Path.
-
-                                                % host(N) when is_integer(N) ->
-                                                %     Id = erlang:integer_to_binary(N),
-                                                %     Service = cluster:env("CLUSTER_SERVICE"),
-                                                %     <<Service/binary, "-", Id>>.
-
-endpoint() ->
-    "https://front-pedro-gutierrez.cloud.okteto.net".
 
 retry(Fun, Msg) ->
     retry(?RETRY_ATTEMPTS, ?RETRY_SLEEP, Fun, Msg).
