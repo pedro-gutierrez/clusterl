@@ -9,12 +9,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
-      - name: Setup Erlang
-        uses: gleam-lang/setup-erlang@v1.1.2
-        with:
-          otp-version: 22.1
-      - name: Run tests
-        run: rebar3 eunit
       - name: Deploy
         uses: pedro-gutierrez/deploy-action@v17
         with:
@@ -23,3 +17,9 @@ jobs:
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
           secrets_name: "secrets"
           secrets: ${{ secrets.SECRETS }}
+      - name: Setup Erlang
+        uses: gleam-lang/setup-erlang@v1.1.2
+        with:
+          otp-version: 22.1
+      - name: Run integration tests
+        run: rebar3 eunit
