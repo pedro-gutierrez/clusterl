@@ -4,10 +4,9 @@
 
 init(Req, _) ->
     Method = cowboy_req:method(Req),
-    Recovery = recovery(Req),
-    do(Method, Recovery, Req).
+    do(Method, Req).
 
-do(<<"GET">>, _, Req) ->
+do(<<"GET">>, Req) ->
     Leader =
         cluster_http:host(
             cluster:leader()),
@@ -20,9 +19,10 @@ do(<<"GET">>, _, Req) ->
                       nodes => Hosts,
                       store => cluster_store:info()},
                     Req);
-do(<<"PUT">>, Recovery, Req) ->
+do(<<"PUT">>, Req) ->
+    Recovery = recovery(Req),
     ok = cluster:set_recovery(Recovery),
-    do(<<"GET">>, Recovery, Req).
+    do(<<"GET">>, Req).
 
 recovery(Req) ->
     case cowboy_req:match_qs([recovery], Req) of
