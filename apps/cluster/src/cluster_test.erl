@@ -19,9 +19,9 @@ cluster_test_() ->
     {timeout,
      ?TEST_TIMEOUT,
      fun() ->
-        %test_halt_host(),
-        %test_disconnect_host(),
-        %test_netsplit_recovery_after_joining_hosts(),
+        test_halt_host(),
+        test_disconnect_host(),
+        test_netsplit_manual_recovery(),
         test_netsplit_automatic_recovery()
      end}.
 
