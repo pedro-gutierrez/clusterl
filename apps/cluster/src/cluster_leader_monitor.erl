@@ -10,6 +10,7 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init(_) ->
+    ok = pg2:join(cluster_events, self()),
     {ok, #{leader => undefined, ref => undefined}, 0}.
 
 handle_info(timeout, State) ->
@@ -20,6 +21,10 @@ handle_info({'DOWN', Ref, process, Pid, Reason}, #{reference := Ref} = State) ->
     State2 = State#{reference => undefined},
     State3 = start_leader(State2),
     {noreply, State3};
+handle_info({cluster, _}, State) ->
+    lager:notice("CLUSTER topology has changed, attempting leadership..."),
+    State2 = start_leader(State),
+    {noreply, State2};
 handle_info(_, State) ->
     {noreply, State}.
 

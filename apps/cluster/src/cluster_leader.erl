@@ -11,22 +11,12 @@ start_link() ->
     gen_server:start_link({global, cluster_leader}, ?MODULE, [], []).
 
 init(_) ->
-    ok = pg2:join(cluster_events, self()),
     notify_cluster_leader(),
     lager:notice("CLUSTER has new leader ~p~n", [node()]),
     {ok, []}.
 
 handle_info(_, State) ->
     {noreply, State}.
-
-% handle_info({cluster, _}, State) ->
-%     case cluster:state() of
-%         red ->
-%             attempt_leader();
-%         _ ->
-%             ok
-%     end,
-%     {noreply, State}.
 
 handle_cast(_, State) ->
     {noreply, State}.
