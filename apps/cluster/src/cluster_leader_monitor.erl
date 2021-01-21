@@ -56,7 +56,7 @@ start_leader() ->
         {error, {already_started, Pid}} ->
             case node(Pid) =/= node() of
                 true ->
-                    Ref = process:monitor(Pid),
+                    Ref = process:monitor(process, Pid),
                     {ok, Pid, Ref};
                 false ->
                     {ok, Pid}
