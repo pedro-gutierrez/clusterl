@@ -3,6 +3,6 @@ shell:
 		CLUSTER_NAMESPACE=nc \
 		CLUSTER_SIZE=2 \
 		ERLANG_COOKIE=netcomp \
-		rebar3 shell \
+		bash -c "rebar3 shell \
 		--config config/sys.config \
-		--name netcomp@netcomp-0.netcomp.nc.svc.cluster.local
+		--name netcomp@netcomp-0.netcomp.nc.svc.cluster.local"
