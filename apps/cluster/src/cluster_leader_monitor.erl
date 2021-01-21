@@ -4,6 +4,7 @@
 
 -export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
+-export([start_leader/1]).
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -35,16 +36,24 @@ terminate(_, _) ->
     ok.
 
 start_leader(State) ->
-    case cluster_leader_sup:start_leader() of
+    case start_leader() of
         {ok, Pid} ->
             State#{leader => Pid};
+        {ok, Pid, Ref} ->
+            lager:notice("CLUSTER already has leader at ~p", [node(Pid)]),
+            State#{leader => Pid, reference => Ref}
+    end.
+
+start_leader() ->
+    case cluster_leader_sup:start_leader() of
+        {ok, _} = Ok ->
+            Ok;
         {error, {already_started, Pid}} ->
-            State2 = State#{leader => Pid},
             case node(Pid) =/= node() of
                 true ->
                     Ref = process:monitor(Pid),
-                    State2#{reference => Ref};
+                    {ok, Pid, Ref};
                 false ->
-                    State2
+                    {ok, Pid}
             end
     end.
