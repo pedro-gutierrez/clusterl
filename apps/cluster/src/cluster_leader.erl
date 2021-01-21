@@ -2,12 +2,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0,
-         init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
+-export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 -export([attempt_leader/0]).
 
@@ -27,11 +22,6 @@ handle_info({cluster, _}, State) ->
             ok
     end,
     {noreply, State}.
-
-                                                % handle_info({'DOWN', Ref, process, Pid, Reason}, #{ref := Ref}) ->
-                                                %     lager:notice("CLUSTER leader in ~p failed with reason ~p~n", [node(Pid), Reason]),
-                                                %     State = attempt_leader(),
-                                                %     {noreply, State}.
 
 handle_cast(_, State) ->
     {noreply, State}.
@@ -60,21 +50,17 @@ notify_cluster_leader() ->
     [Pid ! {cluster, leader} || Pid <- pg2:get_members(cluster_events)].
 
 conflict_resolution_fun() ->
-    fun (_, Pid1, Pid2) ->
-            Node1 = node(Pid1),
-            Node2 = node(Pid2),
-            #{size := Size1} = rpc:call(Node1, cluster_store, info, []),
-            #{size := Size2} = rpc:call(Node2, cluster_store, info, []),
-            {{WinnerPid, WinnerSize}, {LooserPid, LooserSize}} = case Size1 > Size2 of
-                                                                     true ->
-                                                                         {{Pid1, Size1},
-                                                                          {Pid2, Size2}};
-                                                                     false ->
-                                                                         {{Pid2, Size2},
-                                                                          {Pid1, Size1}}
-                                                                 end,
-            lager:notice("CLUSTER netsplit winner: ~p (~p keys), looser ~p (~p keys)",
-                         [node(WinnerPid), WinnerSize, node(LooserPid), LooserSize]),
-            WinnerPid
+    fun(_, Pid1, Pid2) ->
+       Node1 = node(Pid1),
+       Node2 = node(Pid2),
+       #{size := Size1} = rpc:call(Node1, cluster_store, info, []),
+       #{size := Size2} = rpc:call(Node2, cluster_store, info, []),
+       {{WinnerPid, WinnerSize}, {LooserPid, LooserSize}} =
+           case Size1 > Size2 of
+               true -> {{Pid1, Size1}, {Pid2, Size2}};
+               false -> {{Pid2, Size2}, {Pid1, Size1}}
+           end,
+       lager:notice("CLUSTER netsplit winner: ~p (~p keys), looser ~p (~p keys)",
+                    [node(WinnerPid), WinnerSize, node(LooserPid), LooserSize]),
+       WinnerPid
     end.
-
