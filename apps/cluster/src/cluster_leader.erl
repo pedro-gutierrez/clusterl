@@ -11,6 +11,7 @@ start_link() ->
     gen_server:start_link({global, cluster_leader}, ?MODULE, [], []).
 
 init(_) ->
+    ok = pg2:create(leader_events),
     ok = pg2:join(cluster_events, self()),
     notify_cluster_leader(),
     lager:notice("CLUSTER has new leader ~p~n", [node()]),
