@@ -12,12 +12,12 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init(_) ->
-    ok = pg2:join(cluster_events, self()),
+    ok = pg2:join(leader_events, self()),
     ok = init_store(),
     {ok, _} = mnesia:subscribe(system),
     {ok, []}.
 
-handle_info({cluster, _}, State) ->
+handle_info(leader_changed, State) ->
     ok = init_store(),
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
