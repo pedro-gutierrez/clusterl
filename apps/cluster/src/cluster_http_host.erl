@@ -19,9 +19,9 @@ host(join, Node, Host, Req) ->
     rpc:call(Node, cluster, join, []),
     cluster_http:ok(#{join => Host}, Req);
 host(leave, Node, Host, Req) ->
-    Result = rpc:call(Node, cluster, leave, [normal]),
-    lager:notice("CLUSTER command for ~p to leave the cluster: ~p. Nodes: ~p",
-                 [Node, Result, nodes()]),
+    rpc:eval_everywhere(cluster, leave, [normal]),
+    lager:notice("CLUSTER command for ~p to leave the cluster", [Node]),
+    lager:notice("CLUSTER nodes after leaving cluster: ~p", [nodes()]),
     cluster_http:ok(#{disconnect => Host}, Req);
 host(halt, Node, Host, Req) ->
     rpc:async_call(Node, cluster, leave, [halt]),
