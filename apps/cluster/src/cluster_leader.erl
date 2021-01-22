@@ -13,7 +13,8 @@ start_link() ->
 init(_) ->
     ok = pg2:create(leader_events),
     ok = pg2:join(cluster_events, self()),
-    notify_cluster_leader(),
+
+    attempt_leader(),
     lager:notice("CLUSTER has new leader ~p~n", [node()]),
     {ok, []}.
 
