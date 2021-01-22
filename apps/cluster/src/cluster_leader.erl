@@ -12,7 +12,6 @@ start_link() ->
 init(_) ->
     ok = pg2:join(cluster_events, self()),
     attempt_leader(),
-    lager:notice("CLUSTER has new leader ~p~n", [node()]),
     {ok, []}.
 
 handle_info({cluster, nodes_changed}, State) ->
@@ -35,11 +34,17 @@ terminate(Reason, _State) ->
     ok.
 
 attempt_leader() ->
+    AmILeader = cluster:i_am_leader(),
+    attempt_leader(AmILeader).
+
+attempt_leader(false) ->
     case global:register_name(cluster_leader, self()) of
         yes ->
-            lager:notice("CLUSTER has new leader ~p~n", [node()]),
+            lager:notice("CLUSTER I am now leader!~n"),
             cluster:notify_observers({cluster, leader_changed});
         no ->
             Pid = global:whereis_name(cluster_leader),
-            lager:notice("CLUSTER already has leader ~p~n", [node(Pid)])
-    end.
+            lager:notice("CLUSTER leader is still ~p~n", [node(Pid)])
+    end;
+attempt_leader(true) ->
+    ok.
