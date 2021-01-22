@@ -2,7 +2,7 @@
 
 -export([members/0, start/0, join/1, state/0, state/1, neighbours/0, leader/0,
          i_am_leader/0, http_port/0, size/0, service/0, namespace/0, join/0, leave/1, env/1,
-         set_recovery/1, recovery/0]).
+         set_recovery/1, recovery/0, notify_observers/1, observers/0]).
 
 state() ->
     state(neighbours()).
@@ -102,3 +102,9 @@ set_recovery(Recovery) ->
 
 recovery() ->
     cluster_monitor:recovery().
+
+notify_observers(Event) ->
+    [Pid ! Event || Pid <- observers()].
+
+observers() ->
+    pg2:get_members(cluster_events).

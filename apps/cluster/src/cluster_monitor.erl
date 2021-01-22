@@ -16,7 +16,6 @@ recovery() ->
     gen_server:call(?MODULE, recovery).
 
 init([]) ->
-    ok = pg2:create(cluster_events),
     lager:notice("CLUSTER is disabled"),
     {ok,
      #{recovery => manual,
@@ -36,12 +35,12 @@ init(Neighbours) ->
 
 handle_info({nodeup, N}, #{neighbours := Neighbours} = State) ->
     ClusterState = cluster:state(Neighbours),
-    notify_cluster_state(),
+    notify_nodes_changed(),
     lager:notice("CLUSTER is ~p (~p is UP)~n", [ClusterState, N]),
     {noreply, State#{state => ClusterState}};
 handle_info({nodedown, N}, #{neighbours := Neighbours} = State) ->
     ClusterState = cluster:state(Neighbours),
-    notify_cluster_state(),
+    notify_nodes_changed(),
     lager:notice("CLUSTER is ~p (~p is DOWN)~n", [ClusterState, N]),
     reconnect_nodes(State),
     {noreply, State#{state => ClusterState}};
@@ -87,8 +86,8 @@ terminate(Reason, State) ->
     lager:warning("CLUSTER terminating with reason: ~p, and state: ~p~n", [Reason, State]),
     ok.
 
-notify_cluster_state() ->
-    [Pid ! cluster_changed || Pid <- pg2:get_members(cluster_events)].
+notify_nodes_changed() ->
+    cluster:notify_observers({cluster, nodes_changed}).
 
 reconnect_nodes(#{neighbours := Neighbours, recovery := auto}) ->
     % Under certain network conditions, pinging other networks
