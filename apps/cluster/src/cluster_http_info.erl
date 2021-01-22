@@ -21,7 +21,7 @@ do(<<"GET">>, Req) ->
                     Req);
 do(<<"PUT">>, Req) ->
     Recovery = recovery(Req),
-    ok = cluster:set_recovery(Recovery),
+    rpc:eval_everywhere(cluster, set_recovery, [Recovery]),
     do(<<"GET">>, Req).
 
 recovery(Req) ->
