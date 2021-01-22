@@ -5,7 +5,7 @@
 -define(RETRY_ATTEMPTS, 120).
 -define(RETRY_SLEEP, 1000).
 -define(TEST_TIMEOUT, 300).
--define(DEFAULT_ENDPOINT, "https://front-pedro-gutierrez.cloud.okteto.net").
+-define(DEFAULT_ENDPOINT, "https://cluster-pedro-gutierrez.cloud.okteto.net").
 
 endpoint() ->
     case os:getenv("TEST_ENDPOINT") of

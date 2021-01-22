@@ -31,7 +31,7 @@ cluster_store:read(<<"someKey">>>).
 
 ## Live Demo
 
-Available [Here](http://front-pedro-gutierrez.cloud.okteto.net).
+Available [Here](http://cluster-pedro-gutierrez.cloud.okteto.net).
 
 ## Configuration
 
