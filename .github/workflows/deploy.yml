@@ -28,5 +28,5 @@ jobs:
         if: failure()
         uses: pedro-gutierrez/slack-action@v6
         with:
-          slack_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          slack_url: ${{ secrets.SLACK_URL }}
           status: failed
