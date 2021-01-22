@@ -287,11 +287,12 @@ url(Base, Path) ->
     Base ++ Path.
 
 retry(Fun, Msg) ->
-    retry(?RETRY_ATTEMPTS, ?RETRY_SLEEP, Fun, Msg).
+    retry(?RETRY_ATTEMPTS, ?RETRY_SLEEP, Fun, Msg, undefined).
 
-retry(0, _, _, Msg) ->
+retry(0, _, _, Msg, LastError) ->
+    print("Last error: ~p", [LastError]),
     throw(Msg);
-retry(Attempts, Sleep, Fun, Msg) ->
+retry(Attempts, Sleep, Fun, Msg, _) ->
     progress(),
     case safe(Fun) of
         ok ->
@@ -300,7 +301,7 @@ retry(Attempts, Sleep, Fun, Msg) ->
             Result;
         {error, _} = _Err ->
             timer:sleep(Sleep),
-            retry(Attempts - 1, Sleep, Fun, Msg)
+            retry(Attempts - 1, Sleep, Fun, Msg, undefined)
     end.
 
 safe(Fun) ->
