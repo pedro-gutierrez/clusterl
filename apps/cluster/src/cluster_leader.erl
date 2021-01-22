@@ -40,11 +40,11 @@ attempt_leader() ->
 attempt_leader(false) ->
     case global:register_name(cluster_leader, self()) of
         yes ->
-            lager:notice("CLUSTER I am now leader!~n"),
+            lager:notice("CLUSTER new leader is ~p", [node()]),
             cluster:notify_observers({cluster, leader_changed});
         no ->
             Pid = global:whereis_name(cluster_leader),
-            lager:notice("CLUSTER leader is still ~p~n", [node(Pid)])
+            lager:notice("CLUSTER existing leader remains ~p", [node(Pid)])
     end;
 attempt_leader(true) ->
     ok.
