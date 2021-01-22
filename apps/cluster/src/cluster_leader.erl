@@ -8,7 +8,7 @@
 % -export([attempt_leader/0]).
 
 start_link() ->
-    gen_server:start_link({global, cluster_leader}, ?MODULE, [], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init(_) ->
     ok = pg2:create(leader_events),
