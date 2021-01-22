@@ -12,12 +12,12 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init(_) ->
-    ok = pg2:join(leader_events, self()),
+    ok = pg2:join(cluster_events, self()),
     ok = init_store(),
     {ok, _} = mnesia:subscribe(system),
     {ok, []}.
 
-handle_info(leader_changed, State) ->
+handle_info({cluster, leader_changed}, State) ->
     ok = init_store(),
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
@@ -42,18 +42,13 @@ terminate(Reason, _State) ->
     ok.
 
 init_store() ->
-    init_store(cluster:state(), cluster:i_am_leader()).
-
-init_store(green, true) ->
     AllNodes = [node() | nodes()],
     RunningNodes = mnesia:system_info(running_db_nodes),
     MissingMembers = AllNodes -- RunningNodes,
     mnesia:change_config(extra_db_nodes, MissingMembers),
     create_table(AllNodes),
     copy_table(MissingMembers),
-    lager:notice("CLUSTER store synced to ~p", [MissingMembers]);
-init_store(_, _) ->
-    ok.
+    lager:notice("CLUSTER store synced to ~p", [MissingMembers]).
 
 create_table(Nodes) ->
     mnesia:create_table(cluster_items,
