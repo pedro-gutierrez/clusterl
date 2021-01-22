@@ -19,7 +19,13 @@ handle_info(timeout, State) ->
 handle_info({'DOWN', Ref, process, Pid, Reason}, #{reference := Ref} = State) ->
     lager:notice("CLUSTER leader ~p is down with reason ~p", [node(Pid), Reason]),
     State2 = State#{reference => undefined},
-    State3 = start_leader(State2),
+    State3 =
+        case needs_leader(Pid) of
+            false ->
+                start_leader(State2);
+            true ->
+                State2
+        end,
     {noreply, State3};
 handle_info({cluster, _}, State) ->
     lager:notice("CLUSTER topology has changed, attempting leadership..."),
@@ -54,11 +60,9 @@ start_leader() ->
         {ok, _} = Ok ->
             Ok;
         {error, {already_started, Pid}} ->
-            case node(Pid) =/= node() of
-                true ->
-                    Ref = process:monitor(process, Pid),
-                    {ok, Pid, Ref};
-                false ->
-                    {ok, Pid}
-            end
+            Ref = process:monitor(process, Pid),
+            {ok, Pid, Ref}
     end.
+
+needs_leader(Pid) ->
+    node(Pid) =:= node() orelse cluster:state() =:= red.

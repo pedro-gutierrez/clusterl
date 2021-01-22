@@ -17,7 +17,7 @@ worker(Mod) ->
     worker(Mod, []).
 
 worker(Mod, Args) ->
-    {Mod, {Mod, start_link, Args}, permanent, 5000, worker, [Mod]}.
+    {Mod, {Mod, start_link, Args}, temporary, 5000, worker, [Mod]}.
 
 start_leader() ->
     supervisor:start_child(?MODULE, []).
