@@ -60,7 +60,7 @@ start_leader() ->
         {ok, _} = Ok ->
             Ok;
         {error, {already_started, Pid}} ->
-            Ref = process:monitor(process, Pid),
+            Ref = erlang:monitor(process, Pid),
             {ok, Pid, Ref}
     end.
 
