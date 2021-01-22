@@ -1,4 +1,4 @@
-## Clusterl: Simple clustering with Erlang and Kubernetes
+# Clusterl: Simple clustering with Erlang and Kubernetes
 
 Clusterl is a demo for `cluster`, the underlying OTP application
 that makes it easy to turn your Erlang backend into a distributed 
@@ -14,6 +14,20 @@ Add this dependency to your `rebar3.config`:
 
 Then make sure the `cluster` app is part of your release.
 
+
+## Writing to the Key-Value store
+
+To write a key:
+
+```
+cluster_store:write(<<"someKey">>, <<"someValue">>).
+```
+
+To read a key:
+
+```
+cluster_store:read(<<"someKey">>>).
+```
 
 ## Live Demo
 
@@ -37,24 +51,26 @@ cluster size might be supported.
 ## Features
 
 
-* Easy to embed as an extra application in your OTP release
-* Very simple configuration via environment variables
-* Uses Erlang distribution
-* Implements leader election of Active/Passive architectures 
-* Embedded and replicated in memory KV store based on Mnesia
-* Detects network partitions and allows for custom conflict resolution
-* Both `automatic` and `manual` netplit recovery modes
-* Exports Prometheus metrics
-* REST api for cluster management and KV
+- [x] Easy to embed as an extra application in your OTP release
+- [x] Very simple configuration via environment variables
+- [x] Uses Erlang distribution
+- [x] Implements leader election for Active/Passive architectures 
+- [x] Embedded and replicated in memory Key-Value store based on Mnesia
+- [x] Detects network partitions
+- [ ] Custom conflict resolution 
+- [x] Both `automatic` and `manual` netplit recovery modes
+- [ ] Exports Prometheus metrics
+- [x] Cluster management via REST
+- [ ] Key-Value store subscriptions
 
 # Dependencies
 
 This library has been writen in standard Erlang/OTP with minimal 
 library dependencies: 
 
-* Cowboy (web server)
-* Prometheus (monitoring)
-* Jiffy (JSON library)
-* Lagger (Logging)
+* Cowboy `2.0.0-pre.1` (web server)
+* Prometheus `4.2.0` (monitoring)
+* Jiffy `0.14.11"` (JSON library)
+* Lagger `3.2.2"` (Logging)
 
 

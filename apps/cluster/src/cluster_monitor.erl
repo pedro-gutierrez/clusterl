@@ -51,7 +51,6 @@ handle_info(reconnect_nodes, #{recovery := auto, neighbours := Neighbours} = Sta
             lager:notice("CLUSTER still red and recovery is auto"),
             reconnect_nodes(State);
         green ->
-            lager:notice("CLUSTER is green. Stopping recovery for now"),
             ok
     end,
 
