@@ -71,7 +71,7 @@ spec:
               protocol: TCP
           envFrom:
             - secretRef:
-                name: secrets
+                name: clusterl
           env:
             - name: DEPLOYMENT_VERSION
               value: "{{VERSION}}"
