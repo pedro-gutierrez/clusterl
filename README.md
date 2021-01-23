@@ -49,11 +49,11 @@ This feature is built with `pg2` so if your process dies the subscription is aut
 It is only possible to subscribe once from the same Pid.
 
 
-## Live Demo
+### Live Demo
 
 Available [Here](http://cluster-pedro-gutierrez.cloud.okteto.net).
 
-## Configuration
+### Configuration
 
 `cluster` is designed to work inside Kubernetes using **statefulsets**. If you are
 not using statefulset, this library won't work. 
@@ -68,7 +68,7 @@ not using statefulset, this library won't work.
 Note: for now this library assumes a cluster of a fixed size. In the future, a dynamic 
 cluster size might be supported.
 
-## Monitoring
+### Monitoring
 
 The following Prometheus metrics are exposed at path `/metrics`:
 
@@ -84,7 +84,7 @@ The following Prometheus metrics are exposed at path `/metrics`:
 | `cluster_store_subscriptions` | Counter | the number of subcriptions to the store |
 | `cluster_store_partitions` | Counter | total number of network partitions | 
 
-## Features
+### Features
 
 
 - [x] Easy to embed as an extra application in your OTP release
@@ -99,7 +99,7 @@ The following Prometheus metrics are exposed at path `/metrics`:
 - [x] Cluster management via REST
 - [x] Key-Value store subscriptions
 
-# Dependencies
+### Dependencies
 
 This library has been writen in standard Erlang/OTP with minimal 
 library dependencies: 
