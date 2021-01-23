@@ -19,15 +19,37 @@ Then make sure the `cluster` app is part of your release.
 
 To write a key:
 
-```
-cluster_store:write(<<"someKey">>, <<"someValue">>).
+```erlang
+1> ok = cluster_store:write(<<"foo">>, <<"bar">>).
 ```
 
 To read a key:
 
+```erlang
+2> {ok, <<"bar">>} = cluster_store:read(<<"foo">>).
 ```
-cluster_store:read(<<"someKey">>>).
+
+
+
+## Subscribing to store updates
+
+It is possible to get notified when a new key has been written to the store:
+
+```erlang
+1> ok = cluster_store:subscribe(self()).
+2> cluster_store:write(<<"foo">>, <<"bar">>).
+3> flush().
+Shell got {cluster_store,written,<<"foo">>,<<"bar">>}
 ```
+
+If you are no longer interested in receving updates, then you call `cluster_store:unsubscribe/1`
+to remove your process subscription.
+
+This feature is built with `pg2` so if your process dies, then the subscription
+will be automatically removed.
+
+It is only possible to subscribe once from the same Pid.
+
 
 ## Live Demo
 
@@ -61,7 +83,7 @@ cluster size might be supported.
 - [x] Both `automatic` and `manual` netplit recovery modes
 - [ ] Exports Prometheus metrics
 - [x] Cluster management via REST
-- [ ] Key-Value store subscriptions
+- [x] Key-Value store subscriptions
 
 # Dependencies
 
@@ -72,5 +94,6 @@ library dependencies:
 * Prometheus `4.2.0` (monitoring)
 * Jiffy `0.14.11"` (JSON library)
 * Lagger `3.2.2"` (Logging)
+* Reunion `master` (Mnesia partition healing)
 
 
