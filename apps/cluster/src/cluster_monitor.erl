@@ -36,11 +36,15 @@ init(Neighbours) ->
 handle_info({nodeup, N}, #{neighbours := Neighbours} = State) ->
     ClusterState = cluster:state(Neighbours),
     notify_nodes_changed(),
+    cluster_metrics:set(cluster_size, [node() | nodes()]),
+    cluster_metrics:set(cluster_green, cluster:state() =:= green),
     lager:notice("CLUSTER is ~p (~p is UP)~n", [ClusterState, N]),
     {noreply, State#{state => ClusterState}};
 handle_info({nodedown, N}, #{neighbours := Neighbours} = State) ->
     ClusterState = cluster:state(Neighbours),
     notify_nodes_changed(),
+    cluster_metrics:set(cluster_size, [node() | nodes()]),
+    cluster_metrics:set(cluster_green, cluster:state() =:= green),
     lager:notice("CLUSTER is ~p (~p is DOWN)~n", [ClusterState, N]),
     reconnect_nodes(State),
     {noreply, State#{state => ClusterState}};

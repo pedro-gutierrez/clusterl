@@ -4,8 +4,8 @@
 
 -export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
--export([maybe_init_store/0, write/2, read/1, info/0, purge/0, observers/0, subscribe/1,
-         unsubscribe/1]).
+-export([maybe_init_store/0, is_ready/0, write/2, read/1, info/0, purge/0, observers/0,
+         subscribe/1, unsubscribe/1]).
 
 -define(TAB_NAME, cluster_items).
 
@@ -17,6 +17,7 @@ start_link() ->
 init(_) ->
     ok = pg2:join(cluster_events, self()),
     ok = maybe_init_store(),
+    cluster_metrics:set(cluster_store_ready, is_ready()),
     {ok, _} = mnesia:subscribe(system),
     {ok, []}.
 
@@ -27,10 +28,12 @@ handle_info({cluster, nodes_changed}, State) ->
     ok = maybe_init_store(),
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
+    cluster_metrics:inc(cluster_store_partitions),
     lager:notice("CLUSTER store netsplit detected by Mnesia: ~p, ~p", [Context, Node]),
-    % TODO: increment a counter in prometheus metrics
     {noreply, State};
 handle_info({mnesia_table_event, {write, {cluster_items, K, V}, _}}, State) ->
+    Size = table_info(cluster_items, size),
+    cluster_metrics:set(cluster_store_partitions, Size),
     notify_local_observers(K, V),
     {noreply, State};
 handle_info(Other, State) ->
@@ -51,11 +54,11 @@ terminate(Reason, _State) ->
     ok.
 
 maybe_init_store() ->
-    init_store(cluster:am_i_leader(), cluster:state()).
+    init_store(cluster:is_leader(), cluster:state()).
 
 init_store(true, _) ->
-    case table_info(cluster_items, active_replicas) of
-        [] ->
+    case is_ready() of
+        false ->
             AllNodes = cluster:members(),
             mnesia:change_config(extra_db_nodes, AllNodes),
             mnesia:create_table(cluster_items,
@@ -65,7 +68,7 @@ init_store(true, _) ->
             mnesia:write_table_property(kvs, {reunion_compare, {reunion_lib, last_modified, []}}),
             {ok, _} = mnesia:subscribe({table, cluster_items, simple}),
             lager:notice("CLUSTER created table ~p", [?TAB_NAME]);
-        [_ | _] ->
+        true ->
             lager:notice("CLUSTER table ~p already exists", [?TAB_NAME])
     end;
 init_store(false, green) ->
@@ -114,13 +117,15 @@ purge() ->
 subscribe(Pid) ->
     case lists:member(Pid, observers()) of
         false ->
-            pg2:join(cluster_store_events, Pid);
+            ok = pg2:join(cluster_store_events, Pid),
+            cluster_metrics:set(cluster_store_subscriptions, length(observers()));
         true ->
             ok
     end.
 
 unsubscribe(Pid) ->
-    pg2:leave(cluster_store_events, Pid).
+    pg2:leave(cluster_store_events, Pid),
+    cluster_metrics:set(cluster_store_subscriptions, length(observers())).
 
 observers() ->
     pg2:get_members(cluster_store_events).
@@ -129,3 +134,11 @@ notify_local_observers(K, V) ->
     LocalMembers = pg2:get_local_members(cluster_store_events),
     lager:notice("CLUSTER store notifying ~p observers", [length(LocalMembers)]),
     [Pid ! {cluster_store, written, K, V} || Pid <- LocalMembers].
+
+is_ready() ->
+    case table_info(cluster_items, active_replicas) of
+        [] ->
+            false;
+        _ ->
+            true
+    end.

@@ -3,7 +3,7 @@
 -export([init/2]).
 
 init(Req, _) ->
-    case cluster:am_i_leader() of
+    case cluster:is_leader() of
         true ->
             cluster_http:ok(Req);
         _ ->

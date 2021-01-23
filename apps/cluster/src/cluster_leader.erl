@@ -34,17 +34,19 @@ terminate(Reason, _State) ->
     ok.
 
 attempt_leader() ->
-    AmILeader = cluster:am_i_leader(),
+    AmILeader = cluster:is_leader(),
     attempt_leader(AmILeader).
 
 attempt_leader(false) ->
     case global:register_name(cluster_leader, self()) of
         yes ->
+            cluster_metrics:inc(cluster_leader_elections),
             lager:notice("CLUSTER new leader is ~p", [node()]),
             cluster:notify_observers({cluster, leader_changed});
         no ->
             Pid = global:whereis_name(cluster_leader),
             lager:notice("CLUSTER existing leader remains ~p", [node(Pid)])
-    end;
+    end,
+    cluster_metrics:set(cluster_leader, cluster:is_leader());
 attempt_leader(true) ->
     ok.

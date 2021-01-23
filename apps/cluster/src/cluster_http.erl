@@ -34,6 +34,7 @@ start_server(Port) ->
     Dispatch =
         cowboy_router:compile([{'_',
                                 [{"/", cluster_http_info, []},
+                                 {"/metrics", cluster_http_metrics, []},
                                  {"/hosts/:host", cluster_http_host, []},
                                  {"/keys", cluster_http_store, []},
                                  {"/keys/:key", cluster_http_store_key, []},
@@ -90,6 +91,13 @@ unavailable(Req) ->
 unavailable(Data, Req) ->
     reply(503, Data, Req).
 
+reply(Status, {text, Body}, Req0) ->
+    Host = host(node()),
+    Req = cowboy_req:reply(Status,
+                           [{<<"host">>, Host}, {<<"content-type">>, <<"text/plain">>}],
+                           Body,
+                           Req0),
+    {ok, Req, []};
 reply(Status, Body, Req0) ->
     Host = host(node()),
     RawBody = jiffy:encode(Body),
