@@ -9,7 +9,8 @@ start_link() ->
         [worker(cluster_monitor, [cluster:neighbours()]),
          worker(cluster_http, [cluster:http_port()]),
          worker(cluster_leader),
-         worker(cluster_store)],
+         worker(cluster_store),
+         worker(cluster_metrics)],
     supervisor:start_link({local, ?MODULE}, ?MODULE, {{one_for_one, 10, 60}, ChildsSpec}).
 
 init(ChildSpecs) ->
