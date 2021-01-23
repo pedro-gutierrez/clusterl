@@ -106,8 +106,8 @@ library dependencies:
 
 * Cowboy `2.0.0-pre.1` (web server)
 * Prometheus `4.2.0` (monitoring)
-* Jiffy `0.14.11"` (JSON library)
-* Lagger `3.2.2"` (Logging)
+* Jiffy `0.14.11` (JSON library)
+* Lagger `3.2.2` (Logging)
 * Reunion `master` (Mnesia partition healing)
 
 
