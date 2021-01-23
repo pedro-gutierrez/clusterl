@@ -9,8 +9,7 @@
     prometheus,
     jiffy,
     lager,
-    mnesia,
-    reunion
+    mnesia
    ]},
   {env,[]},
   {modules, []},

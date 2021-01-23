@@ -54,8 +54,7 @@ create_table(Nodes) ->
     mnesia:create_table(cluster_items,
                         [{type, set},
                          {attributes, record_info(fields, cluster_items)},
-                         {ram_copies, Nodes}]),
-    mnesia:write_table_property(kvs, {reunion_compare, {reunion_lib, last_modified, []}}).
+                         {ram_copies, Nodes}]).
 
 copy_table(Nodes) ->
     [mnesia:add_table_copy(cluster_items, N, ram_copies) || N <- Nodes].
