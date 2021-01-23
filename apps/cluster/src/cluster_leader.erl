@@ -34,7 +34,7 @@ terminate(Reason, _State) ->
     ok.
 
 attempt_leader() ->
-    AmILeader = cluster:i_am_leader(),
+    AmILeader = cluster:am_i_leader(),
     attempt_leader(AmILeader).
 
 attempt_leader(false) ->

@@ -4,7 +4,9 @@
 
 -export([start_link/0, init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
--export([write/2, read/1, info/0, purge/0]).
+-export([maybe_init_store/0, write/2, read/1, info/0, purge/0]).
+
+-define(TAB_NAME, cluster_items).
 
 -record(cluster_items, {key, data}).
 
@@ -13,21 +15,15 @@ start_link() ->
 
 init(_) ->
     ok = pg2:join(cluster_events, self()),
-    ok = init_store(),
+    ok = maybe_init_store(),
     {ok, _} = mnesia:subscribe(system),
     {ok, []}.
 
-% handle_info({cluster, leader_changed}, State) ->
-%     ok = init_store(),
-%     {noreply, State};
-
+handle_info({cluster, leader_changed}, State) ->
+    ok = maybe_init_store(),
+    {noreply, State};
 handle_info({cluster, nodes_changed}, State) ->
-    case cluster:state() of
-        green ->
-            ok = init_store();
-        red ->
-            ok
-    end,
+    ok = maybe_init_store(),
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
     lager:notice("CLUSTER store netsplit detected by Mnesia: ~p, ~p", [Context, Node]),
@@ -50,24 +46,27 @@ terminate(Reason, _State) ->
     lager:notice("CLUSTER leader process terminated with reason ~p~n", [Reason]),
     ok.
 
-init_store() ->
-    AllNodes = [node() | nodes()],
-    RunningNodes = mnesia:system_info(running_db_nodes),
-    MissingMembers = AllNodes -- RunningNodes,
-    mnesia:change_config(extra_db_nodes, MissingMembers),
-    create_table(AllNodes),
-    copy_table(MissingMembers),
-    lager:notice("CLUSTER store synced to ~p", [MissingMembers]).
+maybe_init_store() ->
+    init_store(cluster:am_i_leader(), cluster:state()).
 
-create_table(Nodes) ->
-    mnesia:create_table(cluster_items,
-                        [{type, set},
-                         {attributes, record_info(fields, cluster_items)},
-                         {ram_copies, Nodes}]),
-    mnesia:write_table_property(kvs, {reunion_compare, {reunion_lib, last_modified, []}}).
-
-copy_table(Nodes) ->
-    [mnesia:add_table_copy(cluster_items, N, ram_copies) || N <- Nodes].
+init_store(true, _) ->
+    case table_info(cluster_items, active_replicas) of
+        [] ->
+            AllNodes = cluster:members(),
+            mnesia:change_config(extra_db_nodes, AllNodes),
+            mnesia:create_table(cluster_items,
+                                [{type, set},
+                                 {attributes, record_info(fields, cluster_items)},
+                                 {ram_copies, AllNodes}]),
+            mnesia:write_table_property(kvs, {reunion_compare, {reunion_lib, last_modified, []}}),
+            lager:notice("CLUSTER created table ~p", [?TAB_NAME]);
+        [_ | _] ->
+            lager:notice("CLUSTER table ~p already exists", [?TAB_NAME])
+    end;
+init_store(false, green) ->
+    mnesia:add_table_copy(cluster_items, node(), ram_copies);
+init_store(_, _) ->
+    ok.
 
 write(Key, Value) ->
     write(#cluster_items{key = Key, data = Value}).

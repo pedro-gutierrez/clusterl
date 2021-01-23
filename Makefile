@@ -1,4 +1,6 @@
 shell:
+	@rm -rf ./mnesia
+	@mkdir -p ./mnesia
 	@CLUSTER_SERVICE=netcomp \
 		CLUSTER_NAMESPACE=nc \
 		CLUSTER_SIZE=2 \

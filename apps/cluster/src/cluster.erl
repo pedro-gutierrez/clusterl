@@ -1,7 +1,7 @@
 -module(cluster).
 
 -export([members/0, start/0, join/1, state/0, state/1, neighbours/0, leader/0,
-         i_am_leader/0, http_port/0, size/0, service/0, namespace/0, join/0, leave/1, env/1,
+         am_i_leader/0, http_port/0, size/0, service/0, namespace/0, join/0, leave/1, env/1,
          set_recovery/1, recovery/0, notify_observers/1, observers/0]).
 
 state() ->
@@ -76,7 +76,7 @@ leader() ->
             node(Pid)
     end.
 
-i_am_leader() ->
+am_i_leader() ->
     leader() == node().
 
 http_port() ->
