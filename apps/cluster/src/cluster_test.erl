@@ -6,7 +6,7 @@
 -define(RETRY_SLEEP, 1000).
 -define(TEST_TIMEOUT, 300).
 -define(DEFAULT_ENDPOINT, "https://cluster-pedro-gutierrez.cloud.okteto.net").
--define(KEYS_TO_WRITE, 10).
+-define(KEYS_TO_WRITE, 50).
 
 endpoint() ->
     case os:getenv("TEST_ENDPOINT") of
@@ -62,14 +62,11 @@ test_netsplit_manual_recovery() ->
     assert_store_size(0),
     write_keys("a", ?KEYS_TO_WRITE),
     assert_store_size(?KEYS_TO_WRITE),
-    disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>).
-
-    % assert_store_size(?KEYS_TO_WRITE),
-    % write_keys("b", ?KEYS_TO_WRITE),
-    % {Host, Size} = busiest_host(),
-    % join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>),
-    % assert_cluster_leader(Host),
-    % assert_store_size(Size).
+    disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
+    assert_store_size(?KEYS_TO_WRITE),
+    write_keys("b", ?KEYS_TO_WRITE),
+    join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>),
+    assert_store_size(2 * ?KEYS_TO_WRITE).
 
 test_netsplit_automatic_recovery() ->
     print("~n== TEST test_netsplit_automatic_recovery()"),
@@ -85,10 +82,8 @@ test_netsplit_automatic_recovery() ->
     disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
     assert_store_size(?KEYS_TO_WRITE),
     write_keys("b", ?KEYS_TO_WRITE),
-    {Host, Size} = busiest_host(),
     set_cluster_recovery("auto"),
-    assert_cluster_leader(Host),
-    assert_store_size(Size).
+    assert_store_size(2 * ?KEYS_TO_WRITE).
 
 assert_cluster_state(State) ->
     print("asserting cluster state ~p", [State]),
@@ -106,9 +101,10 @@ assert_active_replicas(Count) ->
              Url = endpoint(),
              {ok,
               #{status := 200,
-                body := #{<<"state">> := #{<<"replicas">> := #{<<"active">> := Replicas}}}}} =
+                body := #{<<"store">> := #{<<"replicas">> := #{<<"active">> := Replicas}}}}} =
                  http(Url),
-             Count = length(Replicas)
+             Count = length(Replicas),
+             ok
           end,
           <<"expected active replicas to be ", (erlang:integer_to_binary(Count))/binary>>).
 
