@@ -70,6 +70,22 @@ not using statefulset, this library won't work.
 Note: for now this library assumes a cluster of a fixed size. In the future, a dynamic 
 cluster size might be supported.
 
+## Monitoring
+
+The following Prometheus metrics are exposed at path `/metrics`:
+
+| Name | Kind | Help |
+| --- | --- | --- | 
+| `cluster_expected_size` | Gauge | expected size of the erlang cluster |
+| `cluster_size` | Gauge | current size of the erlang cluster |
+| `cluster_green` | Boolean | is the cluster is healthy? |
+| `cluster_leader` | Boolean | is the node the leader? | 
+| `cluster_leader_elections` | Counter | total number of leader elections |
+| `cluster_store_ready` | Boolean | is the cluster store ready? |
+| `cluster_store_size` | Gauge | size of the cluster store | 
+| `cluster_store_subscriptions` | Counter | the number of subcriptions to the store |
+| `cluster_store_partitions` | Counter | total number of network partitions | 
+
 ## Features
 
 
