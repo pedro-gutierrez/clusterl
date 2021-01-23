@@ -17,8 +17,17 @@ init(_) ->
     {ok, _} = mnesia:subscribe(system),
     {ok, []}.
 
-handle_info({cluster, leader_changed}, State) ->
-    ok = init_store(),
+% handle_info({cluster, leader_changed}, State) ->
+%     ok = init_store(),
+%     {noreply, State};
+
+handle_info({cluster, nodes_changed}, State) ->
+    case cluster:state() of
+        green ->
+            ok = init_store();
+        red ->
+            ok
+    end,
     {noreply, State};
 handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State) ->
     lager:notice("CLUSTER store netsplit detected by Mnesia: ~p, ~p", [Context, Node]),
