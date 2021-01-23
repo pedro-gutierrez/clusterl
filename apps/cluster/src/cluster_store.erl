@@ -33,7 +33,7 @@ handle_info({mnesia_system_event, {inconsistent_database, Context, Node}}, State
     {noreply, State};
 handle_info({mnesia_table_event, {write, {cluster_items, K, V}, _}}, State) ->
     Size = table_info(cluster_items, size),
-    cluster_metrics:set(cluster_store_partitions, Size),
+    cluster_metrics:set(cluster_store_size, Size),
     notify_local_observers(K, V),
     {noreply, State};
 handle_info(Other, State) ->
