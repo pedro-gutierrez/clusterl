@@ -4,7 +4,7 @@ Clusterl is a demo for `cluster`, the underlying OTP application
 that makes it easy to turn your Erlang backend into a distributed 
 system running inside Kubernetes using **statefulsets**.
 
-## Usage
+### Usage
 
 Add this dependency to your `rebar3.config`:
 
@@ -15,15 +15,15 @@ Add this dependency to your `rebar3.config`:
 Then make sure the `cluster` app is part of your release.
 
 
-## Writing to the Key-Value store
+### Writing to the Key-Value store
 
-To write a key:
+Write to a key:
 
 ```erlang
 1> ok = cluster_store:write(<<"foo">>, <<"bar">>).
 ```
 
-To read a key:
+Read from a key:
 
 ```erlang
 2> {ok, <<"bar">>} = cluster_store:read(<<"foo">>).
@@ -31,9 +31,9 @@ To read a key:
 
 
 
-## Subscribing to store updates
+### Subscribing to store updates
 
-It is possible to get notified when a new key has been written to the store:
+It is possible subscribe a process in order to get notified when a new entry has been written to the store:
 
 ```erlang
 1> ok = cluster_store:subscribe(self()).
@@ -42,11 +42,9 @@ It is possible to get notified when a new key has been written to the store:
 Shell got {cluster_store,written,<<"foo">>,<<"bar">>}
 ```
 
-If you are no longer interested in receving updates, then you call `cluster_store:unsubscribe/1`
-to remove your process subscription.
+To unsubscribe, use `cluster_store:unsubscribe/1`.
 
-This feature is built with `pg2` so if your process dies, then the subscription
-will be automatically removed.
+This feature is built with `pg2` so if your process dies the subscription is automatically removed.
 
 It is only possible to subscribe once from the same Pid.
 
@@ -97,7 +95,7 @@ The following Prometheus metrics are exposed at path `/metrics`:
 - [x] Detects network partitions
 - [ ] Custom conflict resolution 
 - [x] Both `automatic` and `manual` netplit recovery modes
-- [ ] Exports Prometheus metrics
+- [x] Exports Prometheus metrics
 - [x] Cluster management via REST
 - [x] Key-Value store subscriptions
 
