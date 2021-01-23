@@ -108,14 +108,6 @@ assert_active_replicas(Count) ->
           end,
           <<"expected active replicas to be ", (erlang:integer_to_binary(Count))/binary>>).
 
-assert_cluster_leader(Host) ->
-    print("asserting cluster leader ~p", [Host]),
-    retry(fun() ->
-             Url = endpoint(),
-             {ok, #{status := 200, body := #{<<"leader">> := Host}}} = http(Url)
-          end,
-          <<"expected leader to be", Host/binary>>).
-
 refute_cluster_leader(Host) ->
     print("refuting cluster leader ~p", [Host]),
     retry(fun() ->
@@ -258,39 +250,6 @@ do_write_key(K, V) ->
     Url = url("/keys/key" ++ K),
     Resp = http(put, Url, [], V),
     Resp.
-
-busiest_host() ->
-    Hosts = cluster_hosts(),
-    Score = lists:foldl(fun(H, Map) -> maps:put(H, 0, Map) end, #{}, Hosts),
-    busiest_host(Score, 10).
-
-busiest_host(Score) ->
-    [Default | _] = cluster_hosts(),
-    maps:fold(fun(Host, Size, {_, Size0} = Current) ->
-                 case Size > Size0 of
-                     true -> {Host, Size};
-                     _ -> Current
-                 end
-              end,
-              {Default, 0},
-              Score).
-
-busiest_host(Score, 0) ->
-    busiest_host(Score);
-busiest_host(Score, IterationsLeft) ->
-    {Host, Size} = cluster_store_size(),
-    Score2 = maps:put(Host, Size, Score),
-
-    busiest_host(Score2, IterationsLeft - 1).
-
-cluster_store_size() ->
-    Url = endpoint(),
-    {ok,
-     #{status := 200,
-       headers := #{<<"host">> := Host},
-       body := #{<<"store">> := #{<<"size">> := Size}}}} =
-        http(Url),
-    {Host, Size}.
 
 set_cluster_recovery(Recovery) ->
     print("setting cluster recovery to ~p", [Recovery]),
