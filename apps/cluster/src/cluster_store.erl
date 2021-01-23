@@ -126,4 +126,6 @@ observers() ->
     pg2:get_members(cluster_store_events).
 
 notify_local_observers(K, V) ->
-    [Pid ! {cluster_store, written, K, V} || Pid <- observers(), node(Pid) =:= node()].
+    LocalMembers = pg2:get_local_members(cluster_store_events),
+    lager:notice("CLUSTER store notifying ~p observers", [length(LocalMembers)]),
+    [Pid ! {cluster_store, written, K, V} || Pid <- LocalMembers].
