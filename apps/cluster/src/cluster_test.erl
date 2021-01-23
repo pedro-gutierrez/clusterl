@@ -65,14 +65,14 @@ test_netsplit_automatic_recovery() ->
     print("~n== TEST test_netsplit_automatic_recovery()"),
     setup(),
     assert_cluster_state(<<"green">>),
-    set_cluster_recovery("auto"),
+    set_cluster_recovery("manual"),
     Hosts = cluster_hosts(),
     delete_all_keys(),
     write_keys("a", 100),
     disconnect_hosts_and_wait_for_cluster_state(Hosts, <<"red">>),
     write_keys("b", 100),
     {Host, Size} = busiest_host(),
-    join_hosts_and_wait_for_cluster_state(Hosts, <<"green">>),
+    set_cluster_recovery("auto"),
     assert_cluster_leader(Host),
     assert_store_size(Size).
 
@@ -92,7 +92,7 @@ assert_cluster_leader(Host) ->
              Url = endpoint(),
              {ok, #{status := 200, body := #{<<"leader">> := Host}}} = http(Url)
           end,
-          <<"expected cluster to be", Host/binary>>).
+          <<"expected leader to be", Host/binary>>).
 
 refute_cluster_leader(Host) ->
     print("refuting cluster leader ~p", [Host]),
@@ -101,7 +101,7 @@ refute_cluster_leader(Host) ->
              {ok, #{status := 200, body := #{<<"leader">> := Leader}}} = http(Url),
              ?assert(Host =/= Leader)
           end,
-          <<"expected cluster leader not to be ", Host/binary>>).
+          <<"expected leader not to be ", Host/binary>>).
 
 cluster_leader() ->
     print("retrieving cluster leader"),
