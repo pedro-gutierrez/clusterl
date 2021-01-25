@@ -4,5 +4,8 @@ This is a demo application of [Cluster]([https://github.com/pedro-gutierrez/clus
 Erlang/OTP application that makes it easy to form a cluster inside Kubernetes
 using statefulsets.
 
-Live demo [Here](http://cluster-pedro-gutierrez.cloud.okteto.net).
+
+### Live Demo
+
+Available [Here](http://cluster-pedro-gutierrez.cloud.okteto.net).
 
