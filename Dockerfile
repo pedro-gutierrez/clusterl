@@ -9,6 +9,5 @@ ADD rebar.config .
 ADD rebar3 .
 ADD entrypoint.sh .
 ADD config config
-ADD apps apps
 RUN ./rebar3 release
 CMD ["/opt/clusterl/entrypoint.sh"]
