@@ -1,6 +1,6 @@
 # Clusterl: Simple clustering with Erlang and Kubernetes
 
-This is a demo application of [Cluster]([https://github.com/pedro-gutierrez/cluster), an 
+This is a demo application of [Cluster](https://github.com/pedro-gutierrez/cluster), an 
 Erlang/OTP application that makes it easy to form a cluster inside Kubernetes
 using statefulsets.
 
