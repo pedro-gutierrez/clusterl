@@ -1,6 +1,6 @@
 [{<<"cluster">>,
   {git,"https://github.com/pedro-gutierrez/cluster",
-       {ref,"1e555f86dbc5fe03e2250364a59c284134f7f232"}},
+       {ref,"276d1205de82bef1dfbd5e38a6794abece99fbba"}},
   0},
  {<<"cowboy">>,
   {git,"https://github.com/ninenines/cowboy",
