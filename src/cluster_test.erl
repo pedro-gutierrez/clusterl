@@ -2,7 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--define(RETRY_ATTEMPTS, 120).
+-define(RETRY_ATTEMPTS, 180).
 -define(RETRY_SLEEP, 1000).
 -define(TEST_TIMEOUT, 300).
 -define(DEFAULT_ENDPOINT, "https://cluster-pedro-gutierrez.cloud.okteto.net").
@@ -140,7 +140,7 @@ refute_cluster_leader(Host) ->
              {ok, #{status := 200, body := #{<<"leader">> := Leader}}} = http(Url),
              ?assert(Host =/= Leader)
           end,
-          <<"expected leader not to be ", Host/binary>>).
+          <<"unexpected cluster leader: ", Host/binary>>).
 
 cluster_leader() ->
     print("retrieving cluster leader"),
