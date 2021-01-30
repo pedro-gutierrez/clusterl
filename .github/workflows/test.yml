@@ -1,8 +1,10 @@
-name: Deploy
+name: Test 
 on:
   push: {}
   schedule:
-    - cron: "0 * * * *"
+    - cron: "15 * * * *"
+    - cron: "30 * * * *"
+    - cron: "45 * * * *"
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,15 +17,6 @@ jobs:
           otp-version: 22.1
       - name: Compile
         run: rebar3 compile
-      - name: Deploy
-        uses: pedro-gutierrez/deploy-action@v21
-        with:
-          docker_tag: latest
-          docker_password: ${{ secrets.DOCKER_PASSWORD }}
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-          secrets_name: "clusterl"
-          secrets: ${{ secrets.SECRETS }}
-          scale: "statefulset:clusterl:2"
       - name: Test
         run: rebar3 eunit
       - name: If errors, notify
