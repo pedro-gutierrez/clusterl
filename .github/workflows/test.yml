@@ -5,7 +5,7 @@ on:
     - cron: "30 * * * *"
     - cron: "45 * * * *"
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
