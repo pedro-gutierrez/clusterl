@@ -9,6 +9,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@master
+      - name: Setup Erlang
+        uses: gleam-lang/setup-erlang@v1.1.2
+        with:
+          otp-version: 22.1
+      - name: Compile
+        run: rebar3 compile
       - name: Deploy
         uses: pedro-gutierrez/deploy-action@v21
         with:
@@ -18,11 +24,7 @@ jobs:
           secrets_name: "clusterl"
           secrets: ${{ secrets.SECRETS }}
           scale: "statefulset:clusterl:2"
-      - name: Setup Erlang
-        uses: gleam-lang/setup-erlang@v1.1.2
-        with:
-          otp-version: 22.1
-      - name: Run integration tests
+      - name: Test
         run: rebar3 eunit
       - name: If errors, notify
         if: failure()
