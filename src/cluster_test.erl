@@ -2,9 +2,9 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--define(RETRY_ATTEMPTS, 180).
+-define(RETRY_ATTEMPTS, 300).
 -define(RETRY_SLEEP, 1000).
--define(TEST_TIMEOUT, 300).
+-define(TEST_TIMEOUT, 600).
 -define(DEFAULT_ENDPOINT, "https://cluster-pedro-gutierrez.cloud.okteto.net").
 -define(KEYS_TO_WRITE, 50).
 -define(KEYS_TO_DELETE, 10).
@@ -23,6 +23,7 @@ cluster_test_() ->
     {timeout,
      ?TEST_TIMEOUT,
      fun() ->
+        test_halt_all_hosts(),
         test_halt_host(),
         test_disconnect_host(),
         test_netsplit_manual_recovery(),
@@ -32,9 +33,16 @@ cluster_test_() ->
 
 -endif.
 
+
+test_halt_all_hosts() ->
+    print("~n== TEST test_halt_all_hosts()"),
+    inets:start(),
+    ssl:start(),
+    halt_hosts(),
+    assert_cluster_state(<<"green">>).
+
 test_halt_host() ->
     print("~n== TEST test_halt_host()"),
-    setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     assert_active_replicas(length(Hosts)),
@@ -48,7 +56,6 @@ test_halt_host() ->
 
 test_disconnect_host() ->
     print("~n== TEST test_disconnect_host()"),
-    setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     assert_active_replicas(length(Hosts)),
@@ -59,7 +66,6 @@ test_disconnect_host() ->
 
 test_netsplit_manual_recovery() ->
     print("~n== TEST test_netsplit_manual_recovery()"),
-    setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     assert_active_replicas(length(Hosts)),
@@ -76,7 +82,6 @@ test_netsplit_manual_recovery() ->
 
 test_netsplit_automatic_recovery() ->
     print("~n== TEST test_netsplit_automatic_recovery()"),
-    setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     assert_active_replicas(length(Hosts)),
@@ -94,7 +99,6 @@ test_netsplit_automatic_recovery() ->
 
 test_delete_keys() ->
     print("~n== TEST test_delete_key()"),
-    setup(),
     assert_cluster_state(<<"green">>),
     Hosts = cluster_hosts(),
     assert_active_replicas(length(Hosts)),
@@ -166,6 +170,10 @@ store_size() ->
     Url = endpoint(),
     {ok, #{status := 200, body := #{<<"store">> := #{<<"size">> := Size}}}} = http(Url),
     Size.
+
+halt_hosts() ->
+    Hosts = cluster_hosts(),
+    lists:foreach(fun halt_host/1, Hosts).
 
 halt_host(Host) ->
     print("halting host ~p", [Host]),
@@ -320,9 +328,6 @@ set_cluster_recovery(Recovery) ->
           end,
           <<"could not set cluster recovery">>).
 
-setup() ->
-    inets:start(),
-    ssl:start().
 
 url(Path) ->
     url(endpoint(), Path).
